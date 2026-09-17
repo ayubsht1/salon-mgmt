@@ -1,8 +1,13 @@
 import { useSyncExternalStore } from "react";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-export async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+export async function api<T>(
+  path: string,
+  options: RequestInit = {},
+  token?: string,
+): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -14,7 +19,9 @@ export async function api<T>(path: string, options: RequestInit = {}, token?: st
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.message || data.detail || "Something went wrong. Please try again.");
+    throw new Error(
+      data.message || data.detail || "Something went wrong. Please try again.",
+    );
   }
   return data;
 }
@@ -48,11 +55,12 @@ export type User = {
 };
 
 export function getSession() {
-  if (typeof window === "undefined") return { token: "", user: null as User | null };
+  if (typeof window === "undefined")
+    return { token: "", user: null as User | null };
   const savedUser = localStorage.getItem("salon_user");
   return {
     token: localStorage.getItem("salon_access") || "",
-    user: savedUser ? JSON.parse(savedUser) as User : null,
+    user: savedUser ? (JSON.parse(savedUser) as User) : null,
   };
 }
 
@@ -71,7 +79,14 @@ function subscribeToSession() {
 }
 
 export function useSession() {
-  const snapshot = useSyncExternalStore(subscribeToSession, sessionSnapshot, () => emptySessionSnapshot);
+  const snapshot = useSyncExternalStore(
+    subscribeToSession,
+    sessionSnapshot,
+    () => emptySessionSnapshot,
+  );
   const parsed = JSON.parse(snapshot) as { token: string; user: string | null };
-  return { token: parsed.token, user: parsed.user ? JSON.parse(parsed.user) as User : null };
+  return {
+    token: parsed.token,
+    user: parsed.user ? (JSON.parse(parsed.user) as User) : null,
+  };
 }
