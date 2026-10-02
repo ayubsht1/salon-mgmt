@@ -54,19 +54,28 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
         if appointment_status in (Appointment.Status.CANCELLED, Appointment.Status.COMPLETED):
             return attrs
-
+        # Calculate the new appointment's end time
         appointment_end = appointment_datetime + timedelta(minutes=service.duration_minutes)
-        existing_appointments = Appointment.objects.exclude(
-            status__in=(Appointment.Status.CANCELLED, Appointment.Status.COMPLETED)
+        # Get existing appointments that could conflict
+        existing_appointments = Appointment.objects.filter(
+            service=service
+        ).exclude(
+            status__in=(
+                Appointment.Status.CANCELLED,
+                Appointment.Status.COMPLETED,
+            )
         ).select_related("service")
 
+        # Exclude the current appointment during updates
         if self.instance:
             existing_appointments = existing_appointments.exclude(pk=self.instance.pk)
 
         for existing in existing_appointments:
+            # Calculate each existing appointment's end time
             existing_end = existing.appointment_datetime + timedelta(
                 minutes=existing.service.duration_minutes
             )
+            # Check whether the time ranges overlap
             if (
                 existing.appointment_datetime < appointment_end
                 and existing_end > appointment_datetime
